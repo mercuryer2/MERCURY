@@ -17,12 +17,12 @@ export async function getGitChanges(repoPath: string): Promise<GitChange[]> {
     return stdout
       .trim()
       .split('\n')
-      .map(line => {
+      .map((line) => {
         const status = line.slice(0, 2).trim() as GitChange['status'];
         const path = line.slice(3).trim();
         return { status, path };
       });
-  } catch (error) {
+  } catch (error: any) {
     throw new Error(`Git status failed: ${error.message}`);
   }
 }
@@ -34,6 +34,6 @@ export async function getHeadCommit(repoPath: string): Promise<string | null> {
     });
     return stdout.trim() || null;
   } catch {
-    return null; // 可能是空仓库
+    return null;
   }
 }
