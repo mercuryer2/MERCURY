@@ -2,7 +2,7 @@ import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
-import { reviewRepository } from './core';
+import { reviewRepository } from './core.js';
 
 const server = new Server(
   {
@@ -56,7 +56,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       format: 'json',
     });
     return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
-  } catch (error) {
+  } catch (error: any) {
     return { content: [{ type: 'text', text: `Error: ${error.message}` }], isError: true };
   }
 });
