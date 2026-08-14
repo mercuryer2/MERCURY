@@ -1,5 +1,28 @@
 import { spawn } from 'child_process';
 
+// 简单的引号感知命令分割
+function splitCommand(cmd: string): string[] {
+  const parts: string[] = [];
+  let current = '';
+  let inQuote = false;
+  for (const char of cmd) {
+    if (char === '"') {
+      inQuote = !inQuote;
+      continue;
+    }
+    if (char === ' ' && !inQuote) {
+      if (current) {
+        parts.push(current);
+        current = '';
+      }
+      continue;
+    }
+    current += char;
+  }
+  if (current) parts.push(current);
+  return parts;
+}
+
 export interface ValidationResult {
   success: boolean;
   stdout: string;
@@ -16,7 +39,7 @@ export function runValidation(
   timeoutMs: number = 30000
 ): Promise<ValidationResult> {
   return new Promise((resolve) => {
-    const [cmd, ...args] = command.split(/\s+/);
+    const [cmd, ...args] = splitCommand(command);
     const startTime = Date.now();
     let timedOut = false;
     let stdout = '';
