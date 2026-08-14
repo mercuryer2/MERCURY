@@ -7,6 +7,7 @@ export interface ValidationResult {
   exitCode: number | null;
   timedOut: boolean;
   duration: number; // ms
+  command?: string; // 方便报告显示
 }
 
 export function runValidation(
@@ -23,7 +24,7 @@ export function runValidation(
 
     const proc = spawn(cmd, args, {
       cwd: repoPath,
-      shell: false, // 避免命令注入
+      shell: false, // 防止注入
     });
 
     proc.stdout.on('data', (data) => { stdout += data.toString(); });
