@@ -1,6 +1,6 @@
-import { getGitChanges, getHeadCommit } from './git';
-import { runValidation, ValidationResult } from './validation';
-import { generateMarkdownReport } from './report';
+import { getGitChanges, getHeadCommit } from './git.js';
+import { runValidation, ValidationResult } from './validation.js';
+import { generateMarkdownReport } from './report.js';
 
 export interface ReviewOptions {
   repoPath: string;
@@ -14,7 +14,7 @@ export interface ReviewResult {
   repoPath: string;
   headCommit: string | null;
   changes: { status: string; path: string }[];
-  validation?: ValidationResult & { command?: string };
+  validation?: ValidationResult;
   dryRun?: boolean;
   markdown?: string;
 }
@@ -25,7 +25,7 @@ export async function reviewRepository(options: ReviewOptions): Promise<ReviewRe
   const changes = await getGitChanges(repoPath);
   const headCommit = await getHeadCommit(repoPath);
 
-  let validation: (ValidationResult & { command?: string }) | undefined;
+  let validation: ValidationResult | undefined;
   if (validateCommand) {
     if (dryRun) {
       validation = {
@@ -46,7 +46,7 @@ export async function reviewRepository(options: ReviewOptions): Promise<ReviewRe
   const result: ReviewResult = {
     repoPath,
     headCommit,
-    changes: changes.map(c => ({ status: c.status, path: c.path })),
+    changes: changes.map((c) => ({ status: c.status, path: c.path })),
     validation,
     dryRun: dryRun || undefined,
   };
