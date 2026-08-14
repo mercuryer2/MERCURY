@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
-import { reviewRepository } from './core';
+import { reviewRepository } from './core.js';
 import fs from 'fs';
 
 const program = new Command();
@@ -13,7 +13,7 @@ program
   .option('--timeout <ms>', 'Timeout for validation in ms', '30000')
   .option('--dry-run', 'Preview validation command without executing')
   .option('--format <type>', 'Output format (markdown or json)', 'markdown')
-  .option('--output <file>', 'Write report to file (default: review-report.md)')
+  .option('--output <file>', 'Write report to file')
   .action(async (cmd) => {
     try {
       const result = await reviewRepository({
@@ -34,7 +34,7 @@ program
       const outFile = cmd.output || (cmd.format === 'json' ? 'review-report.json' : 'review-report.md');
       fs.writeFileSync(outFile, output, 'utf8');
       console.log(`Report written to ${outFile}`);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error:', error.message);
       process.exit(1);
     }
