@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "Node16",               // 或 "ESNext"
+    "module": "Node16",
     "moduleResolution": "Node16",
     "strict": true,
     "esModuleInterop": true,
@@ -12,5 +12,5 @@
     "allowSyntheticDefaultImports": true
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "test"]
+  "exclude": ["node_modules", "test", "dist"]
 }
