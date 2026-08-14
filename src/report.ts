@@ -1,5 +1,5 @@
-import { GitChange } from './git';
-import { ValidationResult } from './validation';
+import { GitChange } from './git.js';
+import { ValidationResult } from './validation.js';
 
 export function generateMarkdownReport(
   repoPath: string,
@@ -17,16 +17,16 @@ export function generateMarkdownReport(
     lines.push('No changes detected.');
   } else {
     const table = ['| Status | Path |', '|--------|------|'];
+    const statusMap: Record<string, string> = {
+      M: 'Modified',
+      A: 'Added',
+      D: 'Deleted',
+      R: 'Renamed',
+      C: 'Copied',
+      U: 'Updated but unmerged',
+      '?': 'Untracked',
+    };
     for (const ch of changes) {
-      const statusMap = {
-        M: 'Modified',
-        A: 'Added',
-        D: 'Deleted',
-        R: 'Renamed',
-        C: 'Copied',
-        U: 'Updated but unmerged',
-        '?': 'Untracked',
-      };
       table.push(`| ${statusMap[ch.status] || ch.status} | \`${ch.path}\` |`);
     }
     lines.push(table.join('\n'));
@@ -34,7 +34,7 @@ export function generateMarkdownReport(
 
   if (validation) {
     lines.push('\n## Validation');
-    lines.push(`**Command:** \`${validation.command}\``);
+    lines.push(`**Command:** \`${validation.command || 'unknown'}\``);
     lines.push(`**Success:** ${validation.success ? '✅' : '❌'}`);
     lines.push(`**Duration:** ${validation.duration}ms`);
     if (validation.timedOut) lines.push('**Timed Out:** yes');
