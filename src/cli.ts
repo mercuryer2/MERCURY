@@ -16,11 +16,17 @@ program
   .option('--output <file>', 'Write report to file')
   .action(async (cmd) => {
     try {
+      const timeout = parseInt(cmd.timeout, 10);
+      if (isNaN(timeout) || timeout <= 0) {
+        console.error('Error: --timeout must be a positive integer');
+        process.exit(1);
+      }
+
       const result = await reviewRepository({
         repoPath: cmd.repo,
         validateCommand: cmd.validate,
-        timeout: parseInt(cmd.timeout, 10),
-        dryRun: cmd.dryRun || false,
+        timeout,
+        dryRun: !!cmd.dryRun,
         format: cmd.format,
       });
 
