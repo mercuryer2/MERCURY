@@ -13,19 +13,30 @@ export interface ReviewOptions {
 export interface ReviewResult {
   repoPath: string;
   headCommit: string | null;
-  changes: { status: string; path: string }[];
+  changes: { status: string; path: string; oldPath?: string }[];
   validation?: ValidationResult;
   dryRun?: boolean;
   markdown?: string;
 }
 
 export async function reviewRepository(options: ReviewOptions): Promise<ReviewResult> {
-  const { repoPath, validateCommand, timeout = 30000, dryRun = false, format = 'markdown' } = options;
+  const {
+    repoPath,
+    validateCommand,
+    timeout = 30_000,
+    dryRun = false,
+    format = 'markdown',
+  } = options;
+
+  if (!repoPath.trim()) throw new Error('repoPath must not be empty');
+  if (!Number.isInteger(timeout) || timeout <= 0) throw new Error('timeout must be a positive integer');
+  if (format !== 'markdown' && format !== 'json') throw new Error('format must be markdown or json');
+  if (dryRun && !validateCommand) throw new Error('dryRun requires validateCommand');
 
   const changes = await getGitChanges(repoPath);
   const headCommit = await getHeadCommit(repoPath);
-
   let validation: ValidationResult | undefined;
+
   if (validateCommand) {
     if (dryRun) {
       validation = {
@@ -38,15 +49,21 @@ export async function reviewRepository(options: ReviewOptions): Promise<ReviewRe
         duration: 0,
       };
     } else {
-      const result = await runValidation(validateCommand, repoPath, timeout);
-      validation = { ...result, command: validateCommand };
+      validation = {
+        ...(await runValidation(validateCommand, repoPath, timeout)),
+        command: validateCommand,
+      };
     }
   }
 
   const result: ReviewResult = {
     repoPath,
     headCommit,
-    changes: changes.map((c) => ({ status: c.status, path: c.path })),
+    changes: changes.map(({ status, path, oldPath }) => ({
+      status,
+      path,
+      ...(oldPath ? { oldPath } : {}),
+    })),
     validation,
     dryRun: dryRun || undefined,
   };
