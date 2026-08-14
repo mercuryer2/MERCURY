@@ -1,19 +1,50 @@
-import type { ChangedFile, ValidationResult } from "./types.js";
+import { GitChange } from './git';
+import { ValidationResult } from './validation';
 
-type ReportInput = {
-  repositoryPath: string;
-  changedFiles: ChangedFile[];
-  validationResults: ValidationResult[];
-};
+export function generateMarkdownReport(
+  repoPath: string,
+  changes: GitChange[],
+  headCommit: string | null,
+  validation?: ValidationResult
+): string {
+  const lines: string[] = [];
+  lines.push('# Repository Inspection Report\n');
+  lines.push(`**Path:** \`${repoPath}\``);
+  lines.push(`**Head Commit:** ${headCommit || '(no commits)'}\n`);
 
-export function markdownReport(input: ReportInput): string {
-  const lines = [`# Review Report: ${input.repositoryPath}`, "", "## Changed files"];
-  for (const file of input.changedFiles) {
-    lines.push(`- ${file.path} (${file.status})`);
+  lines.push('## Changes');
+  if (changes.length === 0) {
+    lines.push('No changes detected.');
+  } else {
+    const table = ['| Status | Path |', '|--------|------|'];
+    for (const ch of changes) {
+      const statusMap = {
+        M: 'Modified',
+        A: 'Added',
+        D: 'Deleted',
+        R: 'Renamed',
+        C: 'Copied',
+        U: 'Updated but unmerged',
+        '?': 'Untracked',
+      };
+      table.push(`| ${statusMap[ch.status] || ch.status} | \`${ch.path}\` |`);
+    }
+    lines.push(table.join('\n'));
   }
-  lines.push("", "## Validation output");
-  for (const result of input.validationResults) {
-    lines.push(`### ${result.command}`, "```", result.output, "```");
+
+  if (validation) {
+    lines.push('\n## Validation');
+    lines.push(`**Command:** \`${validation.command}\``);
+    lines.push(`**Success:** ${validation.success ? '✅' : '❌'}`);
+    lines.push(`**Duration:** ${validation.duration}ms`);
+    if (validation.timedOut) lines.push('**Timed Out:** yes');
+    if (validation.stdout) lines.push(`\n### stdout\n\`\`\`\n${validation.stdout}\n\`\`\``);
+    if (validation.stderr) lines.push(`\n### stderr\n\`\`\`\n${validation.stderr}\n\`\`\``);
+    if (!validation.success && !validation.timedOut) {
+      lines.push(`**Exit Code:** ${validation.exitCode}`);
+    }
   }
-  return lines.join("\n");
+
+  lines.push(`\n---\n*Generated at ${new Date().toISOString()}*`);
+  return lines.join('\n');
 }
