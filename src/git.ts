@@ -18,7 +18,9 @@ export async function getGitChanges(repoPath: string): Promise<GitChange[]> {
       .trim()
       .split('\n')
       .map((line) => {
-        const status = line.slice(0, 2).trim() as GitChange['status'];
+        // 取第一个非空格字符作为状态
+        const statusChar = line[0] === ' ' ? line[1] : line[0];
+        const status = statusChar as GitChange['status'];
         const path = line.slice(3).trim();
         return { status, path };
       });
