@@ -1,23 +1,39 @@
-import { execFileSync } from "node:child_process";
-import type { ChangedFile } from "./types.js";
+import { execFile } from 'child_process';
+import { promisify } from 'util';
 
-function git(repositoryPath: string, args: string[]): string {
-  return execFileSync("git", args, {
-    cwd: repositoryPath,
-    encoding: "utf8",
-  }).trim();
+const execFileAsync = promisify(execFile);
+
+export interface GitChange {
+  status: 'M' | 'A' | 'D' | 'R' | 'C' | 'U' | '?';
+  path: string;
 }
 
-export function changedFiles(repositoryPath: string, baseRef?: string): ChangedFile[] {
-  const base = baseRef ?? "main";
-  const output = git(repositoryPath, ["diff", "--name-status", `${base}...HEAD`]);
-
-  return output
-    .split("\n")
-    .filter(Boolean)
-    .map((line) => {
-      const [code, ...pathParts] = line.split("\t");
-      const status = code === "A" ? "added" : code === "D" ? "deleted" : "modified";
-      return { path: pathParts.join("\t"), status };
+export async function getGitChanges(repoPath: string): Promise<GitChange[]> {
+  try {
+    const { stdout } = await execFileAsync('git', ['status', '--porcelain'], {
+      cwd: repoPath,
     });
+    if (!stdout) return [];
+    return stdout
+      .trim()
+      .split('\n')
+      .map(line => {
+        const status = line.slice(0, 2).trim() as GitChange['status'];
+        const path = line.slice(3).trim();
+        return { status, path };
+      });
+  } catch (error) {
+    throw new Error(`Git status failed: ${error.message}`);
+  }
+}
+
+export async function getHeadCommit(repoPath: string): Promise<string | null> {
+  try {
+    const { stdout } = await execFileAsync('git', ['rev-parse', 'HEAD'], {
+      cwd: repoPath,
+    });
+    return stdout.trim() || null;
+  } catch {
+    return null; // 可能是空仓库
+  }
 }
